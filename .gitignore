@@ -1,3 +1,16 @@
+<<<<<<< HEAD
+=======
+*.iml
+.gradle
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+
+>>>>>>> [+] .gitignore add
 # Compiled class file
 *.class
 
@@ -19,4 +32,8 @@
 *.rar
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+<<<<<<< HEAD
 hs_err_pid*
+=======
+hs_err_pid*
+>>>>>>> [+] .gitignore add
