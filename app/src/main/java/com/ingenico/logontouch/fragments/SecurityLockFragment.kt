@@ -32,7 +32,8 @@ class SecurityLockFragment : Fragment(){
     class SecuritySettingScreenDialog: DialogFragment(){
         override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
             val onPositiveclick = { dialog: DialogInterface, which: Int ->
-                activity.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                startActivity(Intent("com.android.credentials.UNLOCK"))
+//                activity.startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
             }
 
             val dialog = AlertDialog.Builder(activity)

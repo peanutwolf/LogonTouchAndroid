@@ -1,6 +1,7 @@
 package com.ingenico.logontouch
 
 import android.Manifest
+import android.app.Activity
 import android.app.Fragment
 import android.app.KeyguardManager
 import android.content.ComponentName
@@ -12,6 +13,7 @@ import android.graphics.PointF
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.security.keystore.UserNotAuthenticatedException
 import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -29,6 +31,7 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import kotlinx.android.synthetic.main.include_progress_overlay.*
 import javax.inject.Inject
 
@@ -67,13 +70,6 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         (application as LogonTouchApp).mSecurityComponent?.inject(this)
-        mLocalKeystore.mShowAuthScreen = Observable.fromCallable {
-            return@fromCallable if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                showAuthenticationScreen()
-            } else {
-                false
-            }
-        }
         mKeyGuard = this.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
     }
 
@@ -117,6 +113,20 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
         unbindService(mHostBridgeServiceConnection)
     }
 
+    private var onUserCredentialAuth: Subject<Boolean>? = null
+    fun retryOnUserAuth(cause: Throwable): Observable<Boolean>{
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ){
+            return Observable.error<Boolean>(cause)
+        }else if(cause !is UserNotAuthenticatedException){
+            return Observable.error<Boolean>(cause)
+        }else if(!showAuthenticationScreen()){
+            return Observable.just(true)
+        }else{
+            onUserCredentialAuth = PublishSubject.create()
+            return onUserCredentialAuth!!
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun showAuthenticationScreen(): Boolean {
         val intent = mKeyGuard.createConfirmDeviceCredentialIntent(null, null)
@@ -127,9 +137,14 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
         return false
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when(requestCode){
-            REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS -> return
+            REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS -> {
+                when(resultCode){
+                    Activity.RESULT_OK  -> onUserCredentialAuth?.onNext(true)
+                    else                -> onUserCredentialAuth?.onError(Exception("User not Authenticated"))
+                }
+            }
         }
     }
 
@@ -230,6 +245,7 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
                         progress_overlay.setOnClickListener(null)
                     }
                 })
+                .retryWhen { e -> e.flatMap { retryOnUserAuth(it) } }
                 .doFinally {progress_overlay.animateView(View.GONE, 0f, 200) }
                 .take(1)
     }

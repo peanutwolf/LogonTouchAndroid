@@ -22,7 +22,6 @@ import javax.security.auth.x500.X500Principal
  */
 
 class AppLocalKeystore(private val context: Context){
-    public var mShowAuthScreen: Observable<Boolean>? = null
     private var mKeyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
     init {
         mKeyStore.load(null)
@@ -91,12 +90,6 @@ class AppLocalKeystore(private val context: Context){
 
             return cipher.doFinal(data)
         }catch (e: Exception) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                when (e) {
-                    is UserNotAuthenticatedException -> mShowAuthScreen?.subscribe()
-                    is KeyPermanentlyInvalidatedException -> TODO("Show reenter key screen")
-                }
-            }
             throw e
         }
     }
@@ -112,12 +105,6 @@ class AppLocalKeystore(private val context: Context){
 
             return cipher.doFinal(data)
         }catch (e: Exception){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                when(e){
-                    is UserNotAuthenticatedException -> mShowAuthScreen?.subscribe()
-                    is KeyPermanentlyInvalidatedException -> TODO("Show reenter key screen")
-                }
-            }
             throw e
         }
     }

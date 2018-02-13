@@ -106,7 +106,8 @@ class MainHeaderFragment: Fragment(){
             //disable view while making request
             setViewAndChildrenEnabled(view, false)
         }.subscribe {hostAddressEntry ->
-            mCertificateRequestDisposable = mMainActivity?.subscribeHostKeys(hostAddressEntry)
+            mCertificateRequestDisposable = mMainActivity
+                    ?.subscribeHostKeys(hostAddressEntry)
                     ?.observeOn(AndroidSchedulers.mainThread())
                     ?.subscribe (
                     {
