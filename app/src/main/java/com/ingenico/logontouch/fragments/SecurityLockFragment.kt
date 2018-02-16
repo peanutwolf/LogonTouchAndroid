@@ -24,7 +24,8 @@ class SecurityLockFragment : Fragment(){
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         bodyActionBtn?.setOnClickListener {
-            SecuritySettingScreenDialog().show(fragmentManager, "SecuritySettings")
+            startActivity(Intent("com.android.credentials.UNLOCK"))
+//            SecuritySettingScreenDialog().show(fragmentManager, "SecuritySettings")
         }
 
     }

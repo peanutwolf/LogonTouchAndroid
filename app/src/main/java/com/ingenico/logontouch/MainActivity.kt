@@ -21,6 +21,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView
 import com.ingenico.logontouch.dict.StatusState
+import com.ingenico.logontouch.exception.DeviceNotBindException
 import com.ingenico.logontouch.exception.UserCancelledException
 import com.ingenico.logontouch.fragments.BindHostDialogFragment
 import com.ingenico.logontouch.fragments.IdleStatusFragment
@@ -219,6 +220,9 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
     }
 
     fun subscribeHostUnlock(hostAddress: HostAddressHolder): Observable<Boolean>{
+        if(!checkClientCertsAvailable()){
+            return Observable.error(DeviceNotBindException())
+        }
 
         return Observable
                 .fromCallable {

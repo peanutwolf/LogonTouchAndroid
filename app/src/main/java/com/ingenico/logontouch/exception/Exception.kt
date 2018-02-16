@@ -7,3 +7,5 @@ package com.ingenico.logontouch.exception
 class UserCancelledException: Throwable("User cancelled request exception")
 
 class CertificateNotReadyException: Throwable("Certificate not Ready exception")
+
+class DeviceNotBindException: Throwable("Device Not Bind exception")

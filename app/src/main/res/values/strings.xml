@@ -1,6 +1,12 @@
 <resources>
     <string name="app_name">LogonTouch</string>
-    <string name="title_activity_login">Sign in</string>
+    <string name="title_activity_login">LogonTouch</string>
+
+    <string name="ip_preference">HOST_IP_ADDRESS</string>
+    <string name="port_preference">PORT_IP_ADDRESS</string>
+
+    <string name="ip_default">127.0.0.1</string>
+    <string name="port_default">8080</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
@@ -28,4 +34,13 @@
 
     <string name="status_wait">Wait while checking host availability</string>
     <string name="status_decodeqr">Please point camera on QR code generated on computer</string>
+    <string name="secure_lock_warn">
+        For proper work your phone should have secure lock.\n\n
+        In order to continue, please set\n
+        one of the following locks in device lock screen menu:\n\n
+        - PIN\n
+        - Graphical Pattern\n
+        - Password\n
+        - Fingerprint
+    </string>
 </resources>

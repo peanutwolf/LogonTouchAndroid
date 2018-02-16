@@ -12,6 +12,7 @@ import java.io.ByteArrayInputStream
 import java.math.BigInteger
 import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.UnrecoverableKeyException
 import java.security.spec.AlgorithmParameterSpec
 import java.util.*
 import javax.crypto.*
@@ -28,10 +29,15 @@ class AppLocalKeystore(private val context: Context){
     }
 
     fun masterKeyAvailable(): Boolean{
-        return when{
-            mKeyStore.containsAlias(MASTER_KEY_ALIAS).not() -> false
-            mKeyStore.getEntry(MASTER_KEY_ALIAS, null) !is KeyStore.PrivateKeyEntry -> false
-            else -> true
+        return try {
+            when{
+                mKeyStore.containsAlias(MASTER_KEY_ALIAS).not() -> false
+                mKeyStore.getEntry(MASTER_KEY_ALIAS, null) !is KeyStore.PrivateKeyEntry -> false
+                else -> true
+            }
+        }catch (ex: UnrecoverableKeyException){
+            mKeyStore.deleteEntry(MASTER_KEY_ALIAS)
+            false
         }
     }
 

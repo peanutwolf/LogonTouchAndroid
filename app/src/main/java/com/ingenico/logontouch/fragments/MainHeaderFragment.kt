@@ -4,6 +4,8 @@ import android.app.Activity
 import android.app.Fragment
 import android.content.Context
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -13,9 +15,11 @@ import com.ingenico.logontouch.MainActivity
 import com.ingenico.logontouch.R
 import com.ingenico.logontouch.dict.StatusState
 import com.ingenico.logontouch.exception.CertificateNotReadyException
+import com.ingenico.logontouch.exception.DeviceNotBindException
 import com.ingenico.logontouch.exception.UserCancelledException
 import com.ingenico.logontouch.tools.*
 import io.reactivex.Observable
+import io.reactivex.ObservableEmitter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.BiFunction
@@ -23,6 +27,7 @@ import kotlinx.android.synthetic.main.fragment_main_header.*
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.nio.charset.Charset
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import javax.inject.Inject
 
@@ -43,7 +48,48 @@ class MainHeaderFragment: Fragment(){
             e.onNext(Pair(hostIpEdit.text.toString(), hostPortEdit.text.toString()))
         }
         e.setCancellable {
-            requestHostCertBtn.setOnClickListener(null)
+            requestHostCertBtn?.setOnClickListener(null)
+        }
+    }
+    private val hostIpEditObservable = Observable.create<String> {
+        val watcher = EmittingTextWatcher(it)
+        hostIpEdit.addTextChangedListener(watcher)
+        it.setCancellable {
+            hostIpEdit?.removeTextChangedListener(watcher)
+        }
+    }
+    private val hostPortEditObservable = Observable.create<String> {
+        val watcher = EmittingTextWatcher(it)
+        hostPortEdit.addTextChangedListener(EmittingTextWatcher(it))
+        it.setCancellable {
+            hostPortEdit?.removeTextChangedListener(watcher)
+        }
+    }
+    private val clearBindingObservable = Observable.create<String> {e->
+        clearHostBtn.setOnClickListener {
+            e.onNext("")
+        }
+        e.setCancellable {
+            clearHostBtn?.setOnClickListener(null)
+        }
+    }.share()
+
+    private var ipEditDisposable: Disposable? = null
+    private var portEditDisposable: Disposable? = null
+
+
+    class EmittingTextWatcher(private val emitter: ObservableEmitter<String>): TextWatcher{
+        override fun afterTextChanged(s: Editable?) {
+            if(s == null) return
+            emitter.onNext(s.toString())
+        }
+
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+
+        }
+
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
         }
     }
 
@@ -124,13 +170,54 @@ class MainHeaderFragment: Fragment(){
 
             mUnlockRequestDisposable = (activity as? MainActivity)?.subscribeHostUnlock(hostAddr)?.subscribe(
                     {
+                        mMainActivity?.mCurrentIdleStatusState = StatusState.HOST_UNLOCKED
                         mCertificateRequestDisposable?.dispose()
                     },
                     {
+                        propagateErrorStatusToActivity(it)
                         mCertificateRequestDisposable?.dispose()
                     }
             )
         }
+
+        val clearIp = clearBindingObservable
+                .map { resources.getString(R.string.ip_default) }
+                .doOnNext {
+                    hostIpEdit.setText(it)
+                }
+
+        ipEditDisposable = hostIpEditObservable.debounce(4, TimeUnit.SECONDS)
+                .mergeWith(clearIp)
+                .subscribe {
+                    val preferences = mMainActivity?.getPreferences(Context.MODE_PRIVATE) ?: return@subscribe
+                    with(preferences.edit()){
+                        putString(getString(R.string.ip_preference), it)
+                    }.commit()
+                }
+
+        val clearPort = clearBindingObservable
+                .map { resources.getString(R.string.port_default) }
+                .doOnNext {
+                    hostPortEdit.setText(it)
+                }
+
+        portEditDisposable = hostPortEditObservable.debounce(4, TimeUnit.SECONDS)
+                .mergeWith(clearPort)
+                .subscribe {
+                    val preferences = mMainActivity?.getPreferences(Context.MODE_PRIVATE) ?: return@subscribe
+                    with(preferences.edit()){
+                        putString(getString(R.string.port_preference), it)
+                    }.commit()
+                }
+
+        val sharedPref = activity?.getPreferences(Context.MODE_PRIVATE) ?: return
+        val defaultIp = resources.getString(R.string.ip_default)
+        val defaultPort = resources.getString(R.string.port_default)
+        val ipAddr = sharedPref.getString(getString(R.string.ip_preference), defaultIp)
+        val port = sharedPref.getString(getString(R.string.port_preference), defaultPort)
+
+        hostIpEdit.setText(ipAddr)
+        hostPortEdit.setText(port)
     }
 
     private fun keysReceived(hostAddressEntry: HostAddressHolder, sessionKeys: ClientSecretKeys){
@@ -189,18 +276,29 @@ class MainHeaderFragment: Fragment(){
         setViewAndChildrenEnabled(view, true)
     }
 
-    private fun onErrorResponse(ex: Throwable){
-        completeKeysRequest()
+    private fun propagateErrorStatusToActivity(ex: Throwable){
         mMainActivity?.mCurrentIdleStatusState = when(ex){
             is SocketException              ->  StatusState.HOST_UNREACHABLE
-            is SocketTimeoutException       ->  StatusState.CONNECTION_TIMEOUT
-            is UserCancelledException       ->  StatusState.USER_CANCELLED
+            is SocketTimeoutException       ->  StatusState.HOST_UNREACHABLE
+            is UserCancelledException       ->  StatusState.DEVICE_NOT_BIND
             is CertificateNotReadyException ->  StatusState.NO_CLIENT_CERT
+            is DeviceNotBindException       ->  StatusState.DEVICE_NOT_BIND
             else                            ->  {
                 ex.printStackTrace()
-                StatusState.GENERAL_ERROR
+                StatusState.DEVICE_BIND
             }
         }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        ipEditDisposable?.dispose()
+        portEditDisposable?.dispose()
+    }
+
+    private fun onErrorResponse(ex: Throwable){
+        completeKeysRequest()
+        propagateErrorStatusToActivity(ex)
     }
 
     private val IP_PATTERN = Pattern.compile(
