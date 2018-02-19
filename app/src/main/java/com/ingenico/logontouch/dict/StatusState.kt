@@ -11,8 +11,8 @@ enum class StatusState(val state: String) {
     DEVICE_BIND("Device bound to PC\n" +
             "Now you can unlock your PC remotely"),
     DEVICE_NOT_BIND("Device isn't bound to PC.\n" +
-            "Please install LogonTouch PC software\n" +
-            "and follow instructions "),
+            "Please launch LogonTouch on PC \n" +
+            "and click 'BIND DEVICE' button"),
 
     KEYGUARD_UNSECURED(""),
 

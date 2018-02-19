@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView
 import com.google.gson.Gson
 import com.ingenico.logontouch.LogonTouchApp
@@ -70,7 +71,9 @@ class BindHostDialogFragment : DialogFragment() {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
-            inflater.inflate(R.layout.fragment_host_status, container, false)
+         inflater.inflate(R.layout.fragment_host_status, container, false).also {
+            dialog.window.requestFeature(Window.FEATURE_NO_TITLE)
+        }
 
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         statusQRDecoder.setQRDecodingEnabled(false)

@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
     <TextView
         android:id="@+id/statusText"
@@ -10,6 +10,8 @@
         android:layout_height="wrap_content"
         android:textAlignment="center"
         android:layout_alignParentTop="true"
+        android:textSize="@dimen/header_title_size"
+        android:padding="@dimen/header_title_margin"
         android:text="@string/status_wait"/>
 
     <ProgressBar
@@ -19,20 +21,22 @@
         android:layout_below="@id/statusText"
         android:layout_centerHorizontal="true"
         />
-    <Button
-        android:id="@+id/statusCancelBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/statusText"
-        android:layout_alignParentEnd="true"
-        android:text="Cancel"/>
 
     <com.dlazaro66.qrcodereaderview.QRCodeReaderView
         android:id="@+id/statusQRDecoder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/statusCancelBtn"
+        android:layout_below="@id/statusText"
         android:visibility="gone"
         />
 
+    <Button
+        android:id="@+id/statusCancelBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_below="@id/statusProgressBar"
+        android:background="@android:color/transparent"
+        android:textColor="@color/colorPurpleBnt"
+        android:text="Cancel" />
 </RelativeLayout>

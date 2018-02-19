@@ -271,8 +271,8 @@ class MainHeaderFragment: Fragment(){
 
     private fun completeKeysRequest(){
         mCertificateRequestDisposable?.dispose()
-        mMainActivity?.dismissBindHostDialog()
         mMainActivity?.mCurrentIdleStatusState = StatusState.DEVICE_BIND
+        mMainActivity?.dismissBindHostDialog()
         setViewAndChildrenEnabled(view, true)
     }
 
@@ -285,7 +285,7 @@ class MainHeaderFragment: Fragment(){
             is DeviceNotBindException       ->  StatusState.DEVICE_NOT_BIND
             else                            ->  {
                 ex.printStackTrace()
-                StatusState.DEVICE_BIND
+                StatusState.HOST_UNREACHABLE
             }
         }
     }

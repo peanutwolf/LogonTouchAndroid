@@ -3,109 +3,93 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/colorYellowLight">
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/hostAddrLayout"
-        android:orientation="vertical"
-        android:layout_width = "match_parent"
-        android:layout_height = "wrap_content">
+    <TextView
+        android:id="@+id/headerTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:padding="@dimen/header_title_margin"
+        android:text="Address of PC to unlock"
+        android:textColor="@color/colorGrayLight"
+        android:textSize="@dimen/header_title_size" />
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Address of PC to unlock"
-                android:textSize="@dimen/header_title_size"
-                android:textColor="@color/colorGrayLight"
-                android:padding="@dimen/header_title_margin"
-                android:id="@+id/headerTitle" />
-
-            <Button
-                android:id="@+id/clearHostBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:layout_alignParentEnd="true"
-                android:layout_gravity="end"
-                android:text="Clear" />
-
-        </RelativeLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="59dp"
-                android:layout_height="match_parent"
-                android:padding="@dimen/header_title_margin"
-                android:text="IP"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <com.ingenico.logontouch.tools.IPAddressText
-                android:id="@+id/hostIpEdit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-
-                android:digits="1234567890."
-                android:text="127.0.01" />
-        </LinearLayout>
+    <Button
+        android:id="@+id/clearHostBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/headerTitle"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="@dimen/activity_vertical_margin"
+        android:text="Clear" />
 
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:text="Port"
-                android:padding="@dimen/header_title_margin"
-                />
+    <TextView
+        android:id="@+id/ipLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/clearHostBtn"
+        android:padding="@dimen/header_title_margin"
+        android:text="IP"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
 
-            <EditText
-                android:id="@+id/hostPortEdit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLength="5"
-                android:inputType="number"
-                android:digits="1234567890"
-                android:padding="@dimen/header_title_margin"
+    <TextView
+        android:id="@+id/portLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@id/ipLabel"
+        android:padding="@dimen/header_title_margin"
+        android:text="Port"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
-                android:text="8080"
-                />
-        </LinearLayout>
 
-    </LinearLayout>
+    <com.ingenico.logontouch.tools.IPAddressText
+        android:id="@+id/hostIpEdit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@id/ipLabel"
+        android:layout_toEndOf="@id/portLabel"
+        android:digits="1234567890."
+        android:text="127.0.01" />
+
+    <EditText
+        android:id="@+id/hostPortEdit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/portLabel"
+        android:layout_toEndOf="@+id/portLabel"
+        android:digits="1234567890"
+        android:inputType="number"
+        android:maxLength="5"
+        android:padding="@dimen/header_title_margin"
+        android:text="8080" />
 
     <Button
         android:id="@+id/unlockHostBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/hostAddrLayout"
         android:layout_alignParentEnd="true"
-        android:layout_marginStart="@dimen/activity_vertical_margin"
-        android:layout_marginEnd="@dimen/activity_vertical_margin"
-        android:text="Unlock"
-        />
+        android:layout_below="@id/portLabel"
+        android:layout_marginEnd="20dp"
+        android:text="Unlock PC" />
 
     <Button
         android:id="@+id/requestHostCertBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/hostAddrLayout"
-
+        android:layout_alignBaseline="@id/unlockHostBtn"
         android:layout_toStartOf="@id/unlockHostBtn"
-        android:text="Bind PC" />
+        android:layout_marginEnd="@dimen/activity_vertical_margin"
+        android:text="Bind Device" />
+
+
+
 
 </RelativeLayout>
