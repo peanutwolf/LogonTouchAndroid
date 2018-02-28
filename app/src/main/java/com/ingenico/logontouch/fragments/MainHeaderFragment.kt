@@ -170,7 +170,10 @@ class MainHeaderFragment: Fragment(){
 
             mUnlockRequestDisposable = (activity as? MainActivity)?.subscribeHostUnlock(hostAddr)?.subscribe(
                     {
-                        mMainActivity?.mCurrentIdleStatusState = StatusState.HOST_UNLOCKED
+                        when(it){
+                            true -> mMainActivity?.mCurrentIdleStatusState = StatusState.HOST_UNLOCKED
+                            false -> mMainActivity?.mCurrentIdleStatusState = StatusState.HOST_NOT_UNLOCKED
+                        }
                         mCertificateRequestDisposable?.dispose()
                     },
                     {
@@ -232,7 +235,7 @@ class MainHeaderFragment: Fragment(){
 
             Observable.zip(clientCertObs, hostCertObs,
                     BiFunction<ClientCertificate?, HostCertificate?, Pair<ClientCertificate?, HostCertificate?>> { t1, t2 -> Pair(t1, t2) })
-                    .doOnComplete {
+                    .doAfterNext {
                         mHttpClient.uploadClientCertificateResult(hostAddressEntry, sessionKeys.sessionHash, true)
                     }
                     .observeOn(AndroidSchedulers.mainThread())
@@ -255,7 +258,7 @@ class MainHeaderFragment: Fragment(){
             it.write(certificate.cert)
         }
 
-        println(certificate.cert.toString(Charset.defaultCharset()))
+        Log.i(LOG_TAG, "Client certificate received")
     }
 
     private fun hostCertReceived(certificate: HostCertificate?){

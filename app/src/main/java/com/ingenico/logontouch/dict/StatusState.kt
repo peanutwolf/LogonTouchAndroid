@@ -7,6 +7,7 @@ enum class StatusState(val state: String) {
     APPLICATION_LOADING("Initializing application resources"),
 
     HOST_UNLOCKED("PC successfully unlocked..."),
+    HOST_NOT_UNLOCKED("PC unlock failed. Something went wrong"),
 
     DEVICE_BIND("Device bound to PC\n" +
             "Now you can unlock your PC remotely"),

@@ -51,7 +51,7 @@ class IdleStatusFragment: Fragment(){
     }
 
     fun showStatusText(text: String){
-        textIdleStatus.text = text
+        textIdleStatus?.text = text
     }
 
     companion object {

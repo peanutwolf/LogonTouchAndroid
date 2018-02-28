@@ -11,6 +11,7 @@ import java.security.cert.X509Certificate
 import android.net.NetworkInfo
 import android.net.ConnectivityManager
 import android.os.Build
+import android.util.Log
 import javax.inject.Inject
 import javax.net.SocketFactory
 
@@ -94,7 +95,10 @@ abstract class HostClient(private val mHostBridgeService: HostBridgeService?){
                 resp.isSuccessful     -> return true
                 resp.isRedirect.not() -> return false
             }
-        }finally {
+        }catch (ex: Exception){
+            return false
+        }
+        finally {
             mHostBridgeService?.closeHostBridge(hostAddr)
         }
 
@@ -205,6 +209,79 @@ class HostHTTPSClient(mHostBridgeService: HostBridgeService?,
 
         return postWithRedirects(url, mHttpClient, body)
     }
+
+    companion object {
+        val PATH_HOST_STATUS     = "external/credential/status"
+        val PATH_HOST_PROVIDE    = "external/credential/provide"
+
+        val QUERY_PARAM_KEY      = "key"
+    }
+}
+
+class TCPHTTPSClient(keyManagerStore: KeyStore?,
+                                keyPass: CharArray?,
+                                trustManagerStore: KeyStore? = null) {
+    private val mTrustManagers: Array<TrustManager> = initTrustManager(trustManagerStore)
+    private var mHttpClient: OkHttpClient
+
+    init {
+        mHttpClient = OkHttpClient.Builder()
+                .sslSocketFactory(getSSLSocketContext(keyManagerStore!!, keyPass!!).socketFactory)
+                .hostnameVerifier { _, _ -> return@hostnameVerifier true }
+                .build()
+    }
+
+    private fun getSSLSocketContext(keyManagerStore: KeyStore, keyPass: CharArray): SSLContext {
+        val keyManagerFactory: KeyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm())
+        keyManagerFactory.init(keyManagerStore, keyPass)
+
+        val sslContext: SSLContext = SSLContext.getInstance("SSL")
+        sslContext.init(keyManagerFactory.keyManagers, mTrustManagers, SecureRandom())
+
+        return sslContext
+    }
+
+    private fun initTrustManager(trustManagerStore: KeyStore?): Array<TrustManager>{
+        return if(trustManagerStore != null){
+            val trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            trustManagerFactory.init(trustManagerStore)
+            trustManagerFactory.trustManagers
+        }else{
+            val unsafeTrustM = object : X509TrustManager{
+                override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+                override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+                }
+                override fun getAcceptedIssuers(): Array<X509Certificate?> {
+                    return arrayOfNulls(0)
+                }
+            }
+            arrayOf(unsafeTrustM)
+        }
+    }
+
+    fun postCredentialKey(hostAddr: HostAddressHolder, credentialKey: String, credentialIV: String): Boolean{
+        val url = HttpUrl.parse("http://${hostAddr.ip}:${hostAddr.port}/$PATH_HOST_PROVIDE")
+                .newBuilder()
+                .build()
+        val JSON = MediaType.parse("application/json; charset=utf-8")
+        val body: RequestBody = RequestBody.create(JSON,
+                """{"key" : "$credentialKey", "iv" : "$credentialIV"}""")
+
+        val req = Request.Builder()
+                .url(url)
+                .post(body)
+                .build()
+
+        val resp = mHttpClient.newCall(req).execute()
+        Log.d("HTTPS", resp.message())
+        return when{
+            resp.isSuccessful     -> true
+            else -> false
+        }
+
+    }
+
 
     companion object {
         val PATH_HOST_STATUS     = "external/credential/status"

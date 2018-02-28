@@ -107,6 +107,8 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
                 setViewAndChildrenEnabled(headerFragmentView, enabled = true)
             }
         }
+
+//        BindHostDialogFragment().show(fragmentManager, "test")
     }
 
     override fun onStop() {
