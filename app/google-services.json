@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "193391175418",
+    "firebase_url": "https://logontouch.firebaseio.com",
+    "project_id": "logontouch",
+    "storage_bucket": "logontouch.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:193391175418:android:d4b47b06fead649c",
+        "android_client_info": {
+          "package_name": "com.ingenico.logontouch"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "193391175418-3t9fpp01ovsorhcrck61hblu2slob621.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ingenico.logontouch",
+            "certificate_hash": "c811353fc44b1bd10f7ecb5499dc4bd0b1072607"
+          }
+        },
+        {
+          "client_id": "193391175418-jsu7l30f289bq21dojfej5ifcbjtmsi4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjKB5IRtiXXuJBDV-BRXU7AezJVQSpLlM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "193391175418-jsu7l30f289bq21dojfej5ifcbjtmsi4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

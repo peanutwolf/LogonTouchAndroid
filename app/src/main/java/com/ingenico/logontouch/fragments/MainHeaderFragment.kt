@@ -10,6 +10,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.google.firebase.crash.FirebaseCrash
 import com.ingenico.logontouch.LogonTouchApp
 import com.ingenico.logontouch.MainActivity
 import com.ingenico.logontouch.R
@@ -23,6 +24,7 @@ import io.reactivex.ObservableEmitter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.BiFunction
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_main_header.*
 import java.net.SocketException
 import java.net.SocketTimeoutException
@@ -235,8 +237,15 @@ class MainHeaderFragment: Fragment(){
 
             Observable.zip(clientCertObs, hostCertObs,
                     BiFunction<ClientCertificate?, HostCertificate?, Pair<ClientCertificate?, HostCertificate?>> { t1, t2 -> Pair(t1, t2) })
-                    .doAfterNext {
-                        mHttpClient.uploadClientCertificateResult(hostAddressEntry, sessionKeys.sessionHash, true)
+                    .observeOn(Schedulers.newThread())
+                    .doOnNext {
+                        try{
+                            mHttpClient.uploadClientCertificateResult(hostAddressEntry, sessionKeys.sessionHash, true)
+                        }catch (ex: Exception){
+                            FirebaseCrash.logcat(Log.ERROR, LOG_TAG, "Failed to upload certificate result")
+                            FirebaseCrash.report(ex)
+                        }
+
                     }
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(

@@ -226,6 +226,8 @@ class TCPHTTPSClient(keyManagerStore: KeyStore?,
 
     init {
         mHttpClient = OkHttpClient.Builder()
+                .followRedirects(true)
+                .followSslRedirects(true)
                 .sslSocketFactory(getSSLSocketContext(keyManagerStore!!, keyPass!!).socketFactory)
                 .hostnameVerifier { _, _ -> return@hostnameVerifier true }
                 .build()
