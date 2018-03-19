@@ -3,6 +3,7 @@ package com.ingenico.logontouch.fragments
 import android.app.Activity
 import android.app.Fragment
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -52,6 +53,16 @@ class IdleStatusFragment: Fragment(){
 
     fun showStatusText(text: String){
         textIdleStatus?.text = text
+    }
+
+    fun showStatusImage(drawable: Drawable?){
+        when(drawable){
+            null -> imgIdleStatus.visibility = View.GONE
+            else -> {
+                imgIdleStatus.visibility = View.VISIBLE
+                imgIdleStatus?.setImageDrawable(drawable)
+            }
+        }
     }
 
     companion object {

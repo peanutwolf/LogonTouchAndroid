@@ -1,8 +1,14 @@
 package com.ingenico.logontouch.dict
 
+import android.graphics.drawable.Drawable
+
 /**
- * Created by vigursky on 19.01.2018.
- */
+* Copyright (c) 2018 All Rights Reserved, Ingenico LLC.
+*
+* Created by vigursky
+* Date: 19.01.2018
+*/
+
 enum class StatusState(val state: String) {
     APPLICATION_LOADING("Initializing application resources"),
 
@@ -17,7 +23,7 @@ enum class StatusState(val state: String) {
 
     KEYGUARD_UNSECURED(""),
 
-    USER_CANCELLED("Request"),
+    USER_CANCELLED("User cancelled request"),
     NO_CLIENT_CERT("Client certificates not generated\n" +
             "Please generate QR code with LogonTouch PC software\n" +
             "and try again"),

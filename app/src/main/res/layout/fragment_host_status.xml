@@ -34,6 +34,7 @@
         android:id="@+id/statusCancelBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
         android:layout_alignParentEnd="true"
         android:layout_below="@id/statusProgressBar"
         android:background="@android:color/transparent"

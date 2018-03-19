@@ -292,7 +292,7 @@ class MainHeaderFragment: Fragment(){
         mMainActivity?.mCurrentIdleStatusState = when(ex){
             is SocketException              ->  StatusState.HOST_UNREACHABLE
             is SocketTimeoutException       ->  StatusState.HOST_UNREACHABLE
-            is UserCancelledException       ->  StatusState.DEVICE_NOT_BIND
+            is UserCancelledException       ->  StatusState.USER_CANCELLED
             is CertificateNotReadyException ->  StatusState.NO_CLIENT_CERT
             is DeviceNotBindException       ->  StatusState.DEVICE_NOT_BIND
             else                            ->  {

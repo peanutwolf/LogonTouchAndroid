@@ -22,4 +22,13 @@
         android:textColor="@color/colorStatus"
         android:text = "Idle status fragment"/>
 
+    <ImageView
+        android:id="@+id/imgIdleStatus"
+        android:layout_width="100sp"
+        android:layout_height="100sp"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:layout_gravity="center"
+        android:src="@drawable/unlocked"
+        />
+
 </LinearLayout>

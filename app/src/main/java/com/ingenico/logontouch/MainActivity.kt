@@ -38,8 +38,11 @@ import javax.inject.Inject
 
 
 /**
- * Created by vigursky on 15.11.2017.
- */
+* Copyright (c) 2018 All Rights Reserved, Ingenico LLC.
+*
+* Created by vigursky
+* Date: 15.11.2017
+*/
 
 class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
@@ -83,7 +86,7 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
     override fun onResume() {
         super.onResume()
-        val headerFragmentView = findViewById(R.id.headerFragment)
+        val headerFragmentView = findViewById<View>(R.id.headerFragment)
         val locked = mKeyGuard.isKeyguardLocked
         val secure = mKeyGuard.isKeyguardSecure
         when{
@@ -107,8 +110,6 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
                 setViewAndChildrenEnabled(headerFragmentView, enabled = true)
             }
         }
-
-//        BindHostDialogFragment().show(fragmentManager, "test")
     }
 
     override fun onStop() {
@@ -180,7 +181,7 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
         val b6 = AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME in applicationContext.fileList()
         val b7 = AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME in applicationContext.fileList()
 
-        return b1.and(b2).and(b3).and(b4).and(b5).and(b6).and(b7)
+        return b1 and b2 and b3 and b4 and b5 and b6 and b7
     }
 
     class QRCodeListener: QRCodeReaderView.OnQRCodeReadListener{
@@ -280,4 +281,19 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
 private fun IdleStatusFragment.setState(value: StatusState) {
     this.showStatusText(value.state)
+
+    val drawable = when(value){
+        StatusState.HOST_UNLOCKED       -> resources.getDrawable(R.drawable.unlocked)
+        StatusState.DEVICE_BIND         -> resources.getDrawable(R.drawable.bound)
+        StatusState.DEVICE_NOT_BIND     -> resources.getDrawable(R.drawable.not_bound)
+        StatusState.HOST_NOT_UNLOCKED,
+        StatusState.GENERAL_ERROR,
+        StatusState.CONNECTION_TIMEOUT,
+        StatusState.HOST_UNREACHABLE,
+        StatusState.USER_CANCELLED,
+        StatusState.NO_CLIENT_CERT      -> resources.getDrawable(R.drawable.error)
+        else -> null
+    }
+
+    showStatusImage(drawable)
 }
