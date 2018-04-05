@@ -158,7 +158,7 @@ class HostCommService: Service() {
 
     companion object {
         private val LOG_TAG = HostCommService::class.java.name!!
-        private val testHostAddr = InetSocketAddress("192.168.10.68", 8080)
+        private val testHostAddr = InetSocketAddress("192.168.1.1", 55470)
 
         private val WHAT_CONNECT_HOST = 0
     }

@@ -5,8 +5,8 @@
     <string name="ip_preference">HOST_IP_ADDRESS</string>
     <string name="port_preference">PORT_IP_ADDRESS</string>
 
-    <string name="ip_default">127.0.0.1</string>
-    <string name="port_default">8080</string>
+    <string name="ip_default">192.168.1.1</string>
+    <string name="port_default">55470</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>

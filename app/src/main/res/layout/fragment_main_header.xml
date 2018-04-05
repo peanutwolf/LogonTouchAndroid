@@ -61,7 +61,7 @@
         android:layout_alignBaseline="@id/ipLabel"
         android:layout_toEndOf="@id/portLabel"
         android:digits="1234567890."
-        android:text="127.0.01" />
+        android:text="@string/ip_default" />
 
     <EditText
         android:id="@+id/hostPortEdit"
@@ -73,7 +73,7 @@
         android:inputType="number"
         android:maxLength="5"
         android:padding="@dimen/header_title_margin"
-        android:text="8080" />
+        android:text="@string/port_default" />
 
     <Button
         android:id="@+id/unlockHostBtn"
