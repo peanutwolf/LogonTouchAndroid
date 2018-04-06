@@ -16,7 +16,7 @@ import javax.inject.Singleton
  */
 
 @Singleton
-@Component(modules = arrayOf(AppModule::class, SecurityModule::class))
+@Component(modules = [(AppModule::class), (SecurityModule::class)])
 interface SecurityComponent{
     fun inject(app: Application)
 

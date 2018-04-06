@@ -119,15 +119,15 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
     private var onUserCredentialAuth: Subject<Boolean>? = null
     fun retryOnUserAuth(cause: Throwable): Observable<Boolean>{
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP ){
-            return Observable.error<Boolean>(cause)
+        return if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M ){
+            Observable.error<Boolean>(cause)
         }else if(cause !is UserNotAuthenticatedException){
-            return Observable.error<Boolean>(cause)
+            Observable.error<Boolean>(cause)
         }else if(!showAuthenticationScreen()){
-            return Observable.just(true)
+            Observable.just(true)
         }else{
             onUserCredentialAuth = PublishSubject.create()
-            return onUserCredentialAuth!!
+            onUserCredentialAuth!!
         }
     }
 

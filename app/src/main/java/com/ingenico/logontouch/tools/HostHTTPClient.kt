@@ -146,15 +146,15 @@ class HostHTTPClient(mHostBridgeService: HostBridgeService?): HostClient(mHostBr
 }
 
 class HostHTTPSClient(mHostBridgeService: HostBridgeService?,
-                      keyManagerStore: KeyStore?,
-                      keyPass: CharArray?,
+                      keyManagerStore: KeyStore,
+                      keyPass: CharArray,
                       trustManagerStore: KeyStore? = null): HostClient(mHostBridgeService){
     private val mTrustManagers: Array<TrustManager> = initTrustManager(trustManagerStore)
     private var mHttpClient: OkHttpClient
 
     init {
         mHttpClient = OkHttpClient.Builder()
-                .sslSocketFactory(getSSLSocketContext(keyManagerStore!!, keyPass!!).socketFactory)
+                .sslSocketFactory(getSSLSocketContext(keyManagerStore, keyPass).socketFactory)
                 .hostnameVerifier { _, _ -> return@hostnameVerifier true }
                 .followRedirects(false)
                 .followSslRedirects(false)
