@@ -95,10 +95,7 @@ abstract class HostClient(private val mHostBridgeService: HostBridgeService?){
                 resp.isSuccessful     -> return true
                 resp.isRedirect.not() -> return false
             }
-        }catch (ex: Exception){
-            return false
-        }
-        finally {
+        } finally {
             mHostBridgeService?.closeHostBridge(hostAddr)
         }
 

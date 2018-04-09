@@ -4,6 +4,14 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
 android {
+    signingConfigs {
+        config {
+            keyAlias 'key0'
+            keyPassword 'U048uv7Q3PER'
+            storeFile file('E:/workspace/AndroidStudioProjects/LogonTouch/logontouchstore.jks')
+            storePassword 'v1R7QO4h8f7G'
+        }
+    }
     compileSdkVersion 27
     buildToolsVersion '27.0.3'
     defaultConfig {
@@ -18,13 +26,14 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.config
         }
     }
 }
 
 dependencies {
     implementation 'com.google.firebase:firebase-crash:11.0.4'
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
@@ -37,13 +46,12 @@ dependencies {
     implementation 'com.android.support:design:27.1.0'
     implementation 'com.dlazaro66.qrcodereaderview:qrcodereaderview:2.0.3'
     implementation 'com.google.code.gson:gson:2.8.2'
-
     implementation 'com.google.dagger:dagger:2.13'
     implementation 'com.google.dagger:dagger-android:2.13'
-    implementation 'com.google.dagger:dagger-android-support:2.13' // if you use the support libraries
+    implementation 'com.google.dagger:dagger-android-support:2.13'
+    // if you use the support libraries
     kapt 'com.google.dagger:dagger-android-processor:2.13'
     kapt 'com.google.dagger:dagger-compiler:2.13'
-
     testImplementation 'junit:junit:4.12'
 }
 
