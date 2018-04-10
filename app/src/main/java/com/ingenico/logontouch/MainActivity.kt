@@ -18,22 +18,29 @@ import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crash.FirebaseCrash
 import com.ingenico.logontouch.dict.StatusState
 import com.ingenico.logontouch.exception.DeviceNotBindException
 import com.ingenico.logontouch.exception.UserCancelledException
 import com.ingenico.logontouch.fragments.BindHostDialogFragment
 import com.ingenico.logontouch.fragments.IdleStatusFragment
+import com.ingenico.logontouch.fragments.MainHeaderFragment
 import com.ingenico.logontouch.fragments.SecurityLockFragment
 import com.ingenico.logontouch.service.HostBridgeService
 import com.ingenico.logontouch.tools.*
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.observables.ConnectableObservable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.android.synthetic.main.include_progress_overlay.*
+import java.security.KeyStore
 import javax.inject.Inject
 
 
@@ -60,6 +67,41 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
     private val mActivityFragmentsMap:HashMap<String, Fragment> = HashMap()
 
+    private var keyStoreSubscription: Disposable? = null
+    private val keyStoreCache: ConnectableObservable<KeyStore> = Observable.fromCallable {
+        Log.d(LOG_TAG, "Reading keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}")
+        val keyManagerPass = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.CLIENT_CERT_PASSPHRASE_ALIAS)
+        return@fromCallable mLocalKeystore.readKeyStore(AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME, keyManagerPass)
+    }.subscribeOn(Schedulers.io())
+            .doOnNext { Log.d(LOG_TAG, "Success to read keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}") }
+            .doOnError {
+                Log.e(LOG_TAG, "Failed to read keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}", it)
+                FirebaseCrash.logcat(Log.ERROR, LOG_TAG, "Failed to read keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}")
+                FirebaseCrash.report(it)
+            }
+            .retryWhen { it.flatMap { trustStoreCache } }
+            .replay()
+
+    private var trustStoreSubscription: Disposable? = null
+    private val trustStoreCache: ConnectableObservable<KeyStore> = Observable.fromCallable {
+        Log.d(LOG_TAG, "Reading keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}")
+        val trustManagerPass = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.SERVER_CERT_PASSPHRASE_ALIAS)
+        return@fromCallable mLocalKeystore.readKeyStore(AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME, trustManagerPass)
+    }.subscribeOn(Schedulers.io())
+            .doOnNext { Log.d(LOG_TAG, "Success to read keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}") }
+            .doOnError {
+                Log.e(LOG_TAG, "Failed to read keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}", it)
+                FirebaseCrash.logcat(Log.ERROR, LOG_TAG, "Failed to read keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}")
+                FirebaseCrash.report(it)
+            }
+            .retryWhen { it.flatMap { keyStoreCache } }
+            .replay()
+
+    private var storeSubscription: Disposable? = null
+    private val storeCache = Observable.zip(listOf(keyStoreCache, trustStoreCache)){
+        it
+    }.subscribeOn(Schedulers.io()).replay()
+
     init {
         mActivityFragmentsMap[SECURITY_LOCK_FRAGMENT] = SecurityLockFragment()
         mActivityFragmentsMap[IDLE_STATUS_FRAGMENT] = IdleStatusFragment()
@@ -75,6 +117,10 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
         setContentView(R.layout.activity_main)
         (application as LogonTouchApp).mSecurityComponent?.inject(this)
         mKeyGuard = this.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if(checkClientCertsAvailable()){
+            keyStoreSubscription = keyStoreCache.connect()
+            trustStoreSubscription = trustStoreCache.connect()
+        }
     }
 
     override fun onStart() {
@@ -104,7 +150,10 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
                     mLocalKeystore.generateMasterKey()
                 }
                 mCurrentIdleStatusState = when(checkClientCertsAvailable()){
-                    true  -> StatusState.DEVICE_BIND
+                    true  -> {
+
+                        StatusState.DEVICE_BIND
+                    }
                     false -> StatusState.DEVICE_NOT_BIND
                 }
                 setViewAndChildrenEnabled(headerFragmentView, enabled = true)
@@ -207,7 +256,6 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
         return mBindHostDialog.onFragmentLoaded
                 .flatMap { mBindHostDialog.subscribeHostClientKeys(hostAddress) }
-
     }
 
     fun subscribeClientCertificate(hostAddress: HostAddressHolder, sessionHash: String): Observable<ClientCertificate?>{
@@ -216,6 +264,14 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
     fun subscribeHostCertificate(hostAddress: HostAddressHolder, sessionHash: String): Observable<HostCertificate?>{
         return mBindHostDialog.subscribeGetHostCertificate(hostAddress, sessionHash)
+    }
+
+    fun onCertificatesStored(){
+        keyStoreSubscription?.dispose()
+        keyStoreSubscription = keyStoreCache.connect()
+
+        trustStoreSubscription?.dispose()
+        trustStoreSubscription = trustStoreCache.connect()
     }
 
     fun dismissBindHostDialog(){
@@ -227,19 +283,18 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
             return Observable.error(DeviceNotBindException())
         }
 
-        return Observable
-                .fromCallable {
+        return Observable.zip(listOf(keyStoreCache, trustStoreCache)){
+            val keyManagerStore = it[0] as KeyStore
+            val trustManagerStore = it[1] as KeyStore
+
+            val keyManagerPass = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.CLIENT_CERT_PASSPHRASE_ALIAS)
+            return@zip HostHTTPSClient(mHostBridgeService, keyManagerStore, keyManagerPass.toCharArray(), trustManagerStore)
+        }
+                .map {
                     val credentialKey  = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.CREDENTIAL_WORKING_KEY_ALIAS)
                     val credentialIV  = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.CREDENTIAL_WORKING_IV_ALIAS)
-                    val keyManagerPass = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.CLIENT_CERT_PASSPHRASE_ALIAS)
-                    val trustManagerPass = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.SERVER_CERT_PASSPHRASE_ALIAS)
-                    val keyManagerStore = mLocalKeystore.readKeyStore(AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME, keyManagerPass)
-                    val trustManagerStore = mLocalKeystore.readKeyStore(AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME, trustManagerPass)
-                    val client = HostHTTPSClient(mHostBridgeService,
-                            keyManagerStore, keyManagerPass.toCharArray(),
-                            trustManagerStore)
-                    val res = client.postCredentialKey(hostAddress, credentialKey, credentialIV)
-                    return@fromCallable res
+                    val res = it.postCredentialKey(hostAddress, credentialKey, credentialIV)
+                    return@map res
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

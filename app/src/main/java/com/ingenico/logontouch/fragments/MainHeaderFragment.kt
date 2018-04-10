@@ -28,7 +28,6 @@ import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.fragment_main_header.*
 import java.net.SocketException
 import java.net.SocketTimeoutException
-import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -252,6 +251,7 @@ class MainHeaderFragment: Fragment(){
                             {
                                 clientCertReceived(it.first)
                                 hostCertReceived(it.second)
+                                onCertificatesStored()
                             },
                             {onErrorResponse(it)},
                             {completeKeysRequest()}
@@ -267,7 +267,7 @@ class MainHeaderFragment: Fragment(){
             it.write(certificate.cert)
         }
 
-        Log.i(LOG_TAG, "Client certificate received")
+        Log.d(LOG_TAG, "Keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME} stored to flash")
     }
 
     private fun hostCertReceived(certificate: HostCertificate?){
@@ -279,6 +279,8 @@ class MainHeaderFragment: Fragment(){
                 it.write(certificate.publicCertificate)
             }
         }
+
+        Log.d(LOG_TAG, "Keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME} stored to flash")
     }
 
     private fun completeKeysRequest(){
