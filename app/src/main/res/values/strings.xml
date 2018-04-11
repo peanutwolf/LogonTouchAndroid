@@ -34,7 +34,7 @@
 
     <string name="status_wait">Please wait…\n
                                 LogonTouch tries connect to PC</string>
-    <string name="status_decodeqr">Please point camera on QR code generated on computer</string>
+    <string name="status_decodeqr">Point camera on QR code generated on computer and wait for recognition</string>
     <string name="secure_lock_warn">
         For proper work your phone should have secure lock.\n\n
         In order to continue, please set\n

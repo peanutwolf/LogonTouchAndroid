@@ -18,18 +18,17 @@ enum class StatusState(val state: String) {
     DEVICE_BIND("Device bound to PC\n" +
             "Now you can unlock your PC remotely"),
     DEVICE_NOT_BIND("Device isn't bound to PC.\n" +
-            "Please launch LogonTouch on PC \n" +
-            "and click 'BIND DEVICE' button"),
+            "Please launch LogonTouchUI on PC \n" +
+            "and click 'GenerateQR' button"),
 
     KEYGUARD_UNSECURED(""),
 
     USER_CANCELLED("User cancelled request"),
     NO_CLIENT_CERT("Client certificates not generated\n" +
-            "Please generate QR code with LogonTouch PC software\n" +
-            "and try again"),
-    HOST_UNREACHABLE("LogonTouch PC Server is unreachable\n" +
-            "Please check if WiFi is turned on\n" +
-            "And phone can connect to PC through network"),
-    CONNECTION_TIMEOUT("LogonTouch PC connection timeout"),
+            "Please generate QR code with LogonTouchUI software"),
+    HOST_UNREACHABLE("PC is unreachable. Please check:\n" +
+            "- WiFi is connected to PC's network.\n" +
+            "- Device has been correctly bound to PC.\n"),
+    CONNECTION_TIMEOUT("Connection timeout..."),
     GENERAL_ERROR("Error occurred")
 }
