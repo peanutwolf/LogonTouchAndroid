@@ -97,11 +97,6 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
             .retryWhen { it.flatMap { keyStoreCache } }
             .replay()
 
-    private var storeSubscription: Disposable? = null
-    private val storeCache = Observable.zip(listOf(keyStoreCache, trustStoreCache)){
-        it
-    }.subscribeOn(Schedulers.io()).replay()
-
     init {
         mActivityFragmentsMap[SECURITY_LOCK_FRAGMENT] = SecurityLockFragment()
         mActivityFragmentsMap[IDLE_STATUS_FRAGMENT] = IdleStatusFragment()
