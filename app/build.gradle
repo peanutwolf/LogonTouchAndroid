@@ -6,10 +6,7 @@ apply plugin: 'kotlin-kapt'
 android {
     signingConfigs {
         config {
-            keyAlias 'key0'
-            keyPassword 'U048uv7Q3PER'
             storeFile file('E:/workspace/AndroidStudioProjects/LogonTouch/logontouchstore.jks')
-            storePassword 'v1R7QO4h8f7G'
         }
     }
     compileSdkVersion 27
@@ -18,8 +15,8 @@ android {
         applicationId "com.ingenico.logontouch"
         minSdkVersion 19
         targetSdkVersion 27
-        versionCode 2
-        versionName '1.1'
+        versionCode 3
+        versionName '1.3'
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
