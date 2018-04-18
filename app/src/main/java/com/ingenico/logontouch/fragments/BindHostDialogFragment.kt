@@ -100,7 +100,7 @@ class BindHostDialogFragment : DialogFragment() {
                 .fromCallable {
                     try{
                         return@fromCallable mHttpClient.requestClientCertificateIsReady(hostAddress)
-                    }catch (ex: SocketTimeoutException){
+                    }catch (ex: Exception){
                         if (mRequestCancelled.not()) throw ex
                         else return@fromCallable false
                     }

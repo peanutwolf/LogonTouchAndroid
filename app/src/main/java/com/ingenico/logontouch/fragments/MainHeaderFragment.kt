@@ -251,7 +251,7 @@ class MainHeaderFragment: Fragment(){
                             {
                                 clientCertReceived(it.first)
                                 hostCertReceived(it.second)
-                                onCertificatesStored()
+                                onCertificatesUpdate()
                             },
                             {onErrorResponse(it)},
                             {completeKeysRequest()}

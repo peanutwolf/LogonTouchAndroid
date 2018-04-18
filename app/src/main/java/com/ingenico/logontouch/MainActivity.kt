@@ -21,14 +21,12 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import com.dlazaro66.qrcodereaderview.QRCodeReaderView
-import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crash.FirebaseCrash
 import com.ingenico.logontouch.dict.StatusState
 import com.ingenico.logontouch.exception.DeviceNotBindException
 import com.ingenico.logontouch.exception.UserCancelledException
 import com.ingenico.logontouch.fragments.BindHostDialogFragment
 import com.ingenico.logontouch.fragments.IdleStatusFragment
-import com.ingenico.logontouch.fragments.MainHeaderFragment
 import com.ingenico.logontouch.fragments.SecurityLockFragment
 import com.ingenico.logontouch.service.HostBridgeService
 import com.ingenico.logontouch.tools.*
@@ -41,6 +39,8 @@ import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.android.synthetic.main.include_progress_overlay.*
 import java.security.KeyStore
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 
@@ -59,7 +59,7 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
     lateinit var mLocalKeystore: AppLocalKeystore
 
     private var currentIdleStatusFragment: IdleStatusFragment? = null
-    public  var mCurrentIdleStatusState: StatusState = StatusState.APPLICATION_LOADING
+    var mCurrentIdleStatusState: StatusState = StatusState.APPLICATION_LOADING
     set(value) {
         field = value
         currentIdleStatusFragment?.setState(value)
@@ -67,34 +67,50 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
 
     private val mActivityFragmentsMap:HashMap<String, Fragment> = HashMap()
 
+    private val keyStoreCacheFailed: AtomicBoolean = AtomicBoolean(false)
     private var keyStoreSubscription: Disposable? = null
     private val keyStoreCache: ConnectableObservable<KeyStore> = Observable.fromCallable {
         Log.d(LOG_TAG, "Reading keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}")
         val keyManagerPass = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.CLIENT_CERT_PASSPHRASE_ALIAS)
         return@fromCallable mLocalKeystore.readKeyStore(AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME, keyManagerPass)
     }.subscribeOn(Schedulers.io())
-            .doOnNext { Log.d(LOG_TAG, "Success to read keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}") }
+            .doOnNext {
+                keyStoreCacheFailed.set(false)
+                Log.d(LOG_TAG, "Success to read keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}") }
             .doOnError {
+                keyStoreCacheFailed.set(true)
                 Log.e(LOG_TAG, "Failed to read keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}", it)
-                FirebaseCrash.logcat(Log.ERROR, LOG_TAG, "Failed to read keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}")
-                FirebaseCrash.report(it)
             }
-            .retryWhen { it.flatMap { trustStoreCache } }
+            .retryWhen { it.flatMap {
+                    return@flatMap when(trustStoreCacheFailed.get()){
+                        false -> trustStoreCache
+                        else -> Observable.error<Throwable>(it)
+                    }
+                }
+            }
             .replay()
 
+    private val trustStoreCacheFailed: AtomicBoolean = AtomicBoolean(false)
     private var trustStoreSubscription: Disposable? = null
     private val trustStoreCache: ConnectableObservable<KeyStore> = Observable.fromCallable {
         Log.d(LOG_TAG, "Reading keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}")
         val trustManagerPass = mLocalKeystore.readWorkingSecretKey(AppLocalKeystore.SERVER_CERT_PASSPHRASE_ALIAS)
         return@fromCallable mLocalKeystore.readKeyStore(AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME, trustManagerPass)
     }.subscribeOn(Schedulers.io())
-            .doOnNext { Log.d(LOG_TAG, "Success to read keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}") }
+            .doOnNext {
+                trustStoreCacheFailed.set(false)
+                Log.d(LOG_TAG, "Success to read keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}") }
             .doOnError {
+                trustStoreCacheFailed.set(true)
                 Log.e(LOG_TAG, "Failed to read keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}", it)
-                FirebaseCrash.logcat(Log.ERROR, LOG_TAG, "Failed to read keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}")
-                FirebaseCrash.report(it)
             }
-            .retryWhen { it.flatMap { keyStoreCache } }
+            .retryWhen { it.flatMap {
+                    return@flatMap when(keyStoreCacheFailed.get()){
+                        false -> keyStoreCache
+                        else -> Observable.error<Throwable>(it)
+                    }
+                }
+            }
             .replay()
 
     init {
@@ -189,7 +205,10 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
         when(requestCode){
             REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS -> {
                 when(resultCode){
-                    Activity.RESULT_OK  -> onUserCredentialAuth?.onNext(true)
+                    Activity.RESULT_OK  -> {
+                        onCertificatesUpdate()
+                        onUserCredentialAuth?.onNext(true)
+                    }
                     else                -> onUserCredentialAuth?.onError(Exception("User not Authenticated"))
                 }
             }
@@ -261,7 +280,7 @@ class MainActivity: AppCompatActivity(), IdleStatusFragment.IdleStatusState{
         return mBindHostDialog.subscribeGetHostCertificate(hostAddress, sessionHash)
     }
 
-    fun onCertificatesStored(){
+    fun onCertificatesUpdate(){
         keyStoreSubscription?.dispose()
         keyStoreSubscription = keyStoreCache.connect()
 
