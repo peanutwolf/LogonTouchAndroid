@@ -80,7 +80,7 @@ class AppLocalKeystore(private val context: Context){
 
         val spec = generateKeyAlgoParameterSpec(MASTER_KEY_ALIAS, X500Principal("CN=MasterK, O=LogonTouch"))
         keyGen.initialize(spec)
-        keyGen.genKeyPair() ?: return false
+         keyGen.genKeyPair() ?: return false
 
         return true
     }

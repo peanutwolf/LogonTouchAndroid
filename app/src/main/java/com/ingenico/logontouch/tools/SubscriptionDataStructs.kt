@@ -14,7 +14,7 @@ data class  ClientSecretKeys(val sessionHash: String,
                              val secretCredentialKey: String,
                              val secretCredentialIV: String)
 
-data class ClientCertificate(private val reqHash: String, val cert: ByteArray) {
+data class ClientCertificate(public val reqHash: String, val cert: ByteArray) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

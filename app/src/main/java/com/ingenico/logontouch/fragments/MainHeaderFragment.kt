@@ -232,30 +232,28 @@ class MainHeaderFragment: Fragment(){
             mLocalKeystore.installWorkingSecretKey(sessionKeys.privateKeyStoreKey, AppLocalKeystore.CLIENT_CERT_PASSPHRASE_ALIAS)
 
             val clientCertObs = subscribeClientCertificate(hostAddressEntry, sessionKeys.sessionHash)
+                    .onErrorReturn { ClientCertificate("", byteArrayOf()) }
             val hostCertObs   = subscribeHostCertificate(hostAddressEntry, sessionKeys.sessionHash)
+                    .onErrorReturn { HostCertificate("", ByteArray(0), charArrayOf()) }
 
             Observable.zip(clientCertObs, hostCertObs,
-                    BiFunction<ClientCertificate?, HostCertificate?, Pair<ClientCertificate?, HostCertificate?>> { t1, t2 -> Pair(t1, t2) })
-                    .observeOn(Schedulers.newThread())
-                    .doOnNext {
-                        try{
-                            mHttpClient.uploadClientCertificateResult(hostAddressEntry, sessionKeys.sessionHash, true)
-                        }catch (ex: Exception){
-                            FirebaseCrash.logcat(Log.ERROR, LOG_TAG, "Failed to upload certificate result")
-                            FirebaseCrash.report(ex)
+                    BiFunction<ClientCertificate?, HostCertificate?, Pair<ClientCertificate?, HostCertificate?>> { t1, t2 ->
+                        if(t1.reqHash.isEmpty() || t2.sessionHash.isEmpty()){
+                            throw SocketException("Failed to receive client certificates")
                         }
-
+                        return@BiFunction Pair(t1, t2)
+                    })
+                    .observeOn(Schedulers.newThread())
+                    .doOnNext{ clientCertReceived(it.first) }
+                    .doOnNext{ hostCertReceived(it.second) }
+                    .doOnNext {
+                        mHttpClient.uploadClientCertificateResult(hostAddressEntry, sessionKeys.sessionHash, true)
                     }
+                    .retryWhen (RetryWithDelay(2000, 5))
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                            {
-                                clientCertReceived(it.first)
-                                hostCertReceived(it.second)
-                                onCertificatesUpdate()
-                            },
-                            {onErrorResponse(it)},
-                            {completeKeysRequest()}
-                    )
+                    .subscribe({onCertificatesUpdate()},
+                            { onErrorResponse(it) },
+                            {completeKeysRequest()})
         }
     }
 
