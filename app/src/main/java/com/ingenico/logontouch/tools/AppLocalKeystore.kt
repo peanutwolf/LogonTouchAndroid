@@ -162,7 +162,7 @@ class AppLocalKeystore(private val context: Context){
         private val TAG = AppLocalKeystore::class.java.simpleName
 
         private const val MASTER_KEY_ALIAS = "MASTER_KEY_ALIAS"
-        private const val AUTHENTICATION_DURATION_SECONDS = 10//5 * 60
+        private const val AUTHENTICATION_DURATION_SECONDS = 5 * 60
 
         private const val cipherTransformation = "${KeyProperties.KEY_ALGORITHM_RSA}" +
                 "/${KeyProperties.BLOCK_MODE_ECB}" +
