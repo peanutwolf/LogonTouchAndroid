@@ -1,12 +1,15 @@
 package com.ingenico.logontouch.tools;
 
 import android.content.Context;
-import android.support.v7.widget.AppCompatEditText;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+
+import com.ingenico.logontouch.R;
+
+import androidx.appcompat.widget.AppCompatEditText;
 
 /**
  * Created by vigursky on 22.11.2017.
@@ -20,7 +23,7 @@ public class IPAddressText extends AppCompatEditText {
     }
 
     public IPAddressText(Context context, AttributeSet attrs) {
-        super(context, attrs, android.support.v7.appcompat.R.attr.editTextStyle);
+        super(context, attrs, R.attr.editTextStyle);
         initIPAddressFilter();
     }
 

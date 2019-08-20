@@ -1,5 +1,6 @@
 package com.ingenico.logontouch.tools
 
+import java.security.KeyStore
 import java.util.*
 
 
@@ -59,3 +60,5 @@ data class HostCertificate(
         return result
     }
 }
+
+data class HostCertificatePair(val keyStore: KeyStore, val trustStore: KeyStore)

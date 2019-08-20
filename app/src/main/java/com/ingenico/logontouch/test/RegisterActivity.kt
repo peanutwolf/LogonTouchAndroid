@@ -1,11 +1,11 @@
 package com.ingenico.logontouch.test
 
-import kotlinx.android.synthetic.main.activity_register.*
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.util.Base64
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import com.ingenico.logontouch.R
+import kotlinx.android.synthetic.main.activity_register.*
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONObject

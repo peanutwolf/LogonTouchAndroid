@@ -1,5 +1,6 @@
 package com.ingenico.logontouch.test;
 
+import android.app.AlertDialog;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -7,8 +8,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyProperties;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,7 +19,6 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 
 import com.ingenico.logontouch.R;
 
@@ -43,6 +41,7 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.security.auth.x500.X500Principal;
 
+import androidx.appcompat.app.AppCompatActivity;
 
 public class TstKeyStoreActivity extends AppCompatActivity {
 

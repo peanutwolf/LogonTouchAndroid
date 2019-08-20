@@ -1,13 +1,11 @@
 package com.ingenico.logontouch.test;
 
 import android.content.Context;
-import android.support.annotation.RawRes;
 
 import com.ingenico.logontouch.R;
 import com.ingenico.logontouch.tools.NoSSLv3Factory;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -30,9 +28,8 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
-
+import androidx.annotation.RawRes;
 import okhttp3.OkHttpClient;
-import okhttp3.internal.tls.OkHostnameVerifier;
 
 /**
  * Created by vigursky on 09.11.2017.

@@ -1,31 +1,43 @@
 package com.ingenico.logontouch.service
 
-import android.annotation.SuppressLint
 import android.app.Service
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.*
 import android.util.Log
+import com.ingenico.logontouch.tools.AppLocalKeystore
 import com.ingenico.logontouch.tools.HostAddressHolder
+import com.ingenico.logontouch.tools.HostCertificatePair
 import io.reactivex.Observable
+import io.reactivex.Single
 import io.reactivex.disposables.Disposable
+import kotlinx.coroutines.*
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.*
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.ServerSocket
+import java.net.Socket
 import java.nio.ByteBuffer
-import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
+import java.security.KeyStore
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.suspendCoroutine
 
 /**
  * Created by vigursky on 20.11.2017.
  */
 
-class HostBridgeService: Service(){
+class HostBridgeService: Service(), CoroutineScope{
     private lateinit var mServiceLooper: Looper
     private val mBridgeTaskPool = HashMap<HostAddressHolder, BridgeServiceHandler>()
+
+    private val keyStoreCacheFailed: AtomicBoolean = AtomicBoolean(false)
+    private var keyStoreCache: KeyStore? = null
+    private var trustStoreCache: KeyStore? = null
+
+    override val coroutineContext: CoroutineContext = SupervisorJob()
 
     private inner class BridgeServiceHandler(looper: Looper, val hostAddr: HostAddressHolder): Handler(looper){
         val mServerSocket:                 ServerSocket             = ServerSocket()
@@ -93,6 +105,54 @@ class HostBridgeService: Service(){
 
     fun closeHostBridge(hostAddr: HostAddressHolder){
         mBridgeTaskPool[hostAddr]?.interrupt()
+    }
+
+    fun readHostCertificates(appKeystore: AppLocalKeystore): Single<HostCertificatePair> {
+
+        return Single.fromCallable {
+            runBlocking (Dispatchers.IO){
+                val keyStore = async {
+                    if(keyStoreCache != null){
+                        Log.v(LOG_TAG, "Using keystore cached certificate")
+                        return@async keyStoreCache!!
+                    }
+
+                    Log.d(LOG_TAG, "Reading keystore ${AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME}")
+                    val keyManagerPass = appKeystore.readWorkingSecretKey(AppLocalKeystore.CLIENT_CERT_PASSPHRASE_ALIAS)
+                    appKeystore.readKeyStore(AppLocalKeystore.CLIENT_PRIVATE_CERT_FILENAME, keyManagerPass).also {
+                        keyStoreCache = it
+                    }
+                }
+
+                val trustStore = async {
+                    if(trustStoreCache != null){
+                        Log.v(LOG_TAG, "Using truststore cached certificate")
+                        return@async trustStoreCache!!
+                    }
+
+                    Log.d(LOG_TAG, "Reading keystore ${AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME}")
+                    val trustManagerPass = appKeystore.readWorkingSecretKey(AppLocalKeystore.SERVER_CERT_PASSPHRASE_ALIAS)
+                    appKeystore.readKeyStore(AppLocalKeystore.SERVER_PUBLIC_CERT_FILENAME, trustManagerPass).also {
+                        trustStoreCache = it
+                    }
+                }
+
+                return@runBlocking HostCertificatePair(keyStore.await(), trustStore.await())
+            }
+        }
+            .doOnSuccess {
+                keyStoreCacheFailed.set(false)
+                Log.d(LOG_TAG, "Success to read host certificates")
+            }
+            .doOnError {
+                keyStoreCacheFailed.set(true)
+                Log.e(LOG_TAG, "Failed to read host certificates", it)
+            }
+    }
+
+    fun clearCertificateCache(){
+        keyStoreCache = null
+        trustStoreCache = null
     }
 
     override fun onCreate() {

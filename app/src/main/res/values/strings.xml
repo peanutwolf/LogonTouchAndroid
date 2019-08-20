@@ -44,4 +44,9 @@
         - Password\n
         - Fingerprint
     </string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="cancel">Cancel</string>
+    <string name="unlock_pc">Unlock PC</string>
+    <string name="loading">Loading...</string>
 </resources>

@@ -7,11 +7,13 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.security.keystore.UserNotAuthenticatedException
+import android.util.Log
 import io.reactivex.Observable
 import java.io.ByteArrayInputStream
 import java.math.BigInteger
 import java.security.KeyPairGenerator
 import java.security.KeyStore
+import java.security.KeyStoreException
 import java.security.UnrecoverableKeyException
 import java.security.spec.AlgorithmParameterSpec
 import java.util.*
@@ -36,8 +38,7 @@ class AppLocalKeystore(private val context: Context){
                 else -> true
             }
         }catch (ex: UnrecoverableKeyException){
-            mKeyStore.deleteEntry(MASTER_KEY_ALIAS)
-            false
+            tryDeleteEntry(MASTER_KEY_ALIAS)
         }
     }
 
@@ -75,7 +76,7 @@ class AppLocalKeystore(private val context: Context){
     fun generateMasterKey(): Boolean {
         val keyGen = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
         when{
-            mKeyStore.containsAlias(MASTER_KEY_ALIAS) -> mKeyStore.deleteEntry(MASTER_KEY_ALIAS)
+            mKeyStore.containsAlias(MASTER_KEY_ALIAS) -> tryDeleteEntry(MASTER_KEY_ALIAS)
         }
 
         val spec = generateKeyAlgoParameterSpec(MASTER_KEY_ALIAS, X500Principal("CN=MasterK, O=LogonTouch"))
@@ -100,7 +101,7 @@ class AppLocalKeystore(private val context: Context){
         }
     }
 
-    private fun decipherData(data: ByteArray): ByteArray{
+    private fun decipherData(data: ByteArray): ByteArray {
         val masterKey = mKeyStore.getEntry(MASTER_KEY_ALIAS, null) as KeyStore.PrivateKeyEntry
         val mPrivateKey = masterKey.privateKey
 
@@ -147,9 +148,21 @@ class AppLocalKeystore(private val context: Context){
         return keyStore
     }
 
+    private fun tryDeleteEntry(alias: String): Boolean{
+        return try {
+            mKeyStore.deleteEntry(alias)
+            true
+        }catch (ex: KeyStoreException){
+            Log.w(TAG, "Failed to delete alias=[$alias]", ex)
+            false
+        }
+    }
+
     companion object {
+        private val TAG = AppLocalKeystore::class.java.simpleName
+
         private const val MASTER_KEY_ALIAS = "MASTER_KEY_ALIAS"
-        private const val AUTHENTICATION_DURATION_SECONDS = 30
+        private const val AUTHENTICATION_DURATION_SECONDS = 10//5 * 60
 
         private const val cipherTransformation = "${KeyProperties.KEY_ALGORITHM_RSA}" +
                 "/${KeyProperties.BLOCK_MODE_ECB}" +
